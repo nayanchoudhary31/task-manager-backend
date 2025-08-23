@@ -1,13 +1,22 @@
 {
-  "name": "blogs-backend",
+  "name": "task-manager",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A robust RESTful API built with Node.js and Express.js for efficient task management",
+  "main": "src/server.js",
   "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "nodejs",
+    "express",
+    "mvc",
+    "api",
+    "tasks",
+    "task-management"
+  ],
+  "author": "Nayan Choudhary",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^2.2.0",
