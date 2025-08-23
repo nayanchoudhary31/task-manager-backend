@@ -1,4 +1,4 @@
-# 📝 Blogs Backend - Task Management API
+# 📝 Task Manager - Task Management API
 
 A robust RESTful API built with Node.js and Express.js for efficient task management. This backend service provides complete CRUD operations with comprehensive validation and error handling.
 
@@ -25,12 +25,14 @@ A robust RESTful API built with Node.js and Express.js for efficient task manage
 ## ⚡ Quick Start
 
 ### 1. Clone the Repository
+
 ```bash
 git clone <repository-url>
-cd blogs-backend
+cd task-manager
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 pnpm install
 # or
@@ -38,58 +40,103 @@ npm install
 ```
 
 ### 3. Start the Server
+
 ```bash
+npm start
+# or
 node src/server.js
 ```
 
 The server will start on `http://localhost:3002`
 
 ### 4. Environment Variables
+
 - `PORT` - Server port (default: 3002)
 
+## 📚 API Documentation
 
-### File Descriptions
+### Base URL
 
-- **`taskController.js`** - Contains all task-related business logic (CRUD operations)
-- **`taskRoutes.js`** - Defines API routes and applies middleware
-- **`validation.js`** - Input validation middleware for request data
-- **`errorHandler.js`** - Global error handling middleware
-- **`requestLogger.js`** - Logs all incoming requests for debugging
-- **`app.js`** - Express app configuration and middleware setup
-- **`server.js`** - Server initialization and port configuration
+`http://localhost:3002/api`
 
-## 🔧 Development
+### Endpoints
 
-### Available Scripts
-```bash
-npm test    # Run tests (currently not implemented)
+| Method   | Endpoint     | Description     | Request Body                                       |
+| -------- | ------------ | --------------- | -------------------------------------------------- |
+| `GET`    | `/tasks`     | Get all tasks   | -                                                  |
+| `GET`    | `/tasks/:id` | Get task by ID  | -                                                  |
+| `POST`   | `/tasks`     | Create new task | `{ "taskName": "string" }`                         |
+| `PUT`    | `/tasks/:id` | Update task     | `{ "taskName": "string", "isCompleted": boolean }` |
+| `DELETE` | `/tasks/:id` | Delete task     | -                                                  |
+
+## 📁 Project Structure
+
+```
+src/
+├── models/
+│ └── taskModel.js # Business logic and data operations
+├── controllers/
+│ └── taskController.js # HTTP request/response handling
+├── routes/
+│ └── taskRoutes.js # API route definitions
+├── middlewares/
+│ ├── validation.js # Input validation middleware
+│ ├── errorHandler.js # Global error handling
+│ └── requestLogger.js # Request logging middleware
+├── utils/
+│ └── errors.js # Custom error classes
+├── app.js # Express app configuration
+└── server.js # Server entry point
 ```
 
-### Adding New Features
+## 🔧 Component Descriptions
 
-1. **Create Controller** - Add business logic in `src/controllers/`
-2. **Define Routes** - Add API endpoints in `src/routes/`
-3. **Implement Validation** - Add validation rules in `src/middlewares/validation.js`
-4. **Update App Configuration** - Register new routes in `src/app.js`
+### **Models** (`src/models/`)
 
+- **`taskModel.js`** - Contains all business logic for task operations
+  - Handles data storage (in-memory array)
+  - Performs CRUD operations
+  - Throws custom errors for business rule violations
+  - Validates data before processing
 
-### Production Considerations
-- Set appropriate environment variables
-- Use a process manager (PM2, Forever)
-- Implement proper logging
-- Add security middleware
-- Use HTTPS in production
+### **Controllers** (`src/controllers/`)
 
+- **`taskController.js`** - Handles HTTP requests and responses
+  - Receives requests from routes
+  - Calls model methods for business logic
+  - Formats responses for clients
+  - Passes errors to error handler
 
-## 🤝 Contributing
+### **Routes** (`src/routes/`)
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- **`taskRoutes.js`** - Defines API endpoints
+  - Maps HTTP methods to controller functions
+  - Applies validation middleware
+  - Handles URL parameters
 
-## 📝 License
+### **Middlewares** (`src/middlewares/`)
+
+- **`validation.js`** - Validates incoming request data
+  - Checks data types and formats
+  - Ensures required fields are present
+  - Throws custom validation errors
+- **`errorHandler.js`** - Centralized error handling
+  - Catches all application errors
+  - Logs errors for debugging
+  - Sends consistent error responses
+- **`requestLogger.js`** - Logs all incoming requests
+  - Records request details
+  - Helps with debugging and monitoring
+
+### **Utils** (`src/utils/`)
+
+- **`errors.js`** - Custom error classes
+
+  - `NotFoundError` - For missing resources (404)
+  - `ValidationError` - For invalid data (400)
+  - Provides consistent error structure
+
+  ## 📝 License
 
 This project is licensed under the ISC License.
 
@@ -97,7 +144,7 @@ This project is licensed under the ISC License.
 
 - **Name**: Nayan Choudhary
 - **Email**: nayanscsit09@gmail.com
-- **GitHub**:nayanchaudhary31
+- **GitHub**: nayanchaudhary31
 
 ## 🔮 Future Enhancements
 
