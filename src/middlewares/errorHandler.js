@@ -1,3 +1,5 @@
+const { ValidationError, NotFoundError } = require("../utils/errors");
+
 const errorHanlder = (err, req, resp, next) => {
   console.error("Error Occured", {
     message: err.message,
@@ -7,7 +9,7 @@ const errorHanlder = (err, req, resp, next) => {
     timestamp: new Date().toISOString(),
   });
 
-  if (err.name === "Validation Error") {
+  if (err instanceof ValidationError) {
     return resp.status(400).json({
       error: "Validation Error",
       message: err.message,
@@ -15,7 +17,7 @@ const errorHanlder = (err, req, resp, next) => {
     });
   }
 
-  if (err.name === "NotFoundError") {
+  if (err instanceof NotFoundError) {
     return resp.status(404).json({
       error: "Not Found",
       message: err.message,
