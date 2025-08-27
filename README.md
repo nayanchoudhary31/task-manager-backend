@@ -1,26 +1,29 @@
 # 📝 Task Manager - Task Management API
 
-A robust RESTful API built with Node.js and Express.js for efficient task management. This backend service provides complete CRUD operations with comprehensive validation and error handling.
+A robust RESTful API built with Node.js, Express.js, and Prisma (PostgreSQL) for efficient task management. This backend service provides complete CRUD operations with validation and centralized error handling.
 
 ## 🚀 Features
 
 - **Complete CRUD Operations** - Create, Read, Update, and Delete tasks
-- **Input Validation** - Comprehensive validation for all endpoints
-- **Error Handling** - Centralized error handling with proper HTTP status codes
-- **Request Logging** - Middleware for logging all incoming requests
-- **RESTful Design** - Follows REST API conventions and best practices
-- **Modular Architecture** - Clean separation of concerns with controllers, routes, and middlewares
+- **Input Validation** - Validation for task creation and updates
+- **Error Handling** - Centralized error handling with consistent responses
+- **Request Logging** - Lightweight middleware logs incoming requests
+- **RESTful Design** - Follows REST conventions
+- **Prisma ORM** - PostgreSQL-backed persistence with schema migrations
 
 ## Technologies Used
 
-- **Node.js** - JavaScript runtime environment
-- **Express.js** - Fast, unopinionated web framework
-- **body-parser** - Request body parsing middleware
+- **Node.js**
+- **Express.js** (v5)
+- **Prisma** ORM with **PostgreSQL**
+- **body-parser** for JSON parsing (via router)
 
 ## 📋 Prerequisites
 
-- Node.js (v14 or higher)
-- pnpm (recommended) or npm
+- Node.js (v18 or higher recommended)
+- pnpm or npm
+- A PostgreSQL database
+- Prisma CLI (installed via devDependency)
 
 ## ⚡ Quick Start
 
@@ -28,7 +31,7 @@ A robust RESTful API built with Node.js and Express.js for efficient task manage
 
 ```bash
 git clone <repository-url>
-cd task-manager
+cd task-manager-backend
 ```
 
 ### 2. Install Dependencies
@@ -39,19 +42,46 @@ pnpm install
 npm install
 ```
 
-### 3. Start the Server
+### 3. Configure Environment
+
+Create a `.env` file in the project root:
 
 ```bash
-npm start
-# or
-node src/server.js
+cp .env.example .env  # if present, otherwise create manually
 ```
 
-The server will start on `http://localhost:3002`
+Add the database URL:
 
-### 4. Environment Variables
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DB_NAME?schema=public"
+PORT=3002
+```
 
-- `PORT` - Server port (default: 3002)
+### 4. Setup Database with Prisma
+
+```bash
+# Generate Prisma client
+pnpm exec prisma generate
+
+# Apply migrations (will create/updates tables)
+pnpm exec prisma migrate dev --name init
+```
+Alternatively, you can use the npm scripts:
+
+```bash
+pnpm run prisma:generate
+pnpm run prisma:migrate:dev
+```
+
+### 5. Start the Server
+
+```bash
+pnpm run dev   # with nodemon
+# or
+pnpm start
+```
+
+The server runs on `http://localhost:${PORT}` (default: `3002`).
 
 ## 📚 API Documentation
 
@@ -61,82 +91,169 @@ The server will start on `http://localhost:3002`
 
 ### Endpoints
 
-| Method   | Endpoint     | Description     | Request Body                                       |
-| -------- | ------------ | --------------- | -------------------------------------------------- |
-| `GET`    | `/tasks`     | Get all tasks   | -                                                  |
-| `GET`    | `/tasks/:id` | Get task by ID  | -                                                  |
-| `POST`   | `/tasks`     | Create new task | `{ "taskName": "string" }`                         |
-| `PUT`    | `/tasks/:id` | Update task     | `{ "taskName": "string", "isCompleted": boolean }` |
-| `DELETE` | `/tasks/:id` | Delete task     | -                                                  |
+- `GET /tasks` — Get all tasks
+- `GET /tasks/:id` — Get a task by ID
+- `POST /tasks` — Create a new task
+- `PUT /tasks/:id` — Update a task (name and/or completion)
+- `DELETE /tasks/:id` — Delete a task
+
+### Request/Response Details
+
+- **Task model** (`prisma/schema.prisma`):
+  - `id: Int (auto-increment)`
+  - `taskName: String`
+  - `isCompleted: Boolean` (default `false`)
+  - `createdAt: DateTime`
+  - `updatedAt: DateTime`
+
+#### Create Task
+
+- Method: `POST /tasks`
+- Body:
+```json
+{
+  "taskName": "Buy milk"
+}
+```
+- Responses:
+  - 201: `{ "message": "Task Added Successfully!", "task": { ... } }`
+  - 400: Validation errors
+
+#### Update Task
+
+- Method: `PUT /tasks/:id`
+- Body (partial allowed):
+```json
+{
+  "taskName": "Buy milk and eggs",
+  "isCompleted": true
+}
+```
+- Responses:
+  - 200: `{ "message": "Task Updated Successfully!", "task": { ... } }`
+  - 400/404: Validation or Not Found
+
+#### Get All Tasks
+
+- Method: `GET /tasks`
+- Response:
+```json
+{
+  "tasks": [
+    {
+      "id": 1,
+      "taskName": "Buy milk",
+      "isCompleted": false,
+      "createdAt": "2025-08-27T11:50:00.000Z",
+      "updatedAt": "2025-08-27T11:50:00.000Z"
+    }
+  ]
+}
+```
+
+#### Get Task by ID
+
+- Method: `GET /tasks/:id`
+- Response:
+```json
+{
+  "task": { ... }
+}
+```
+
+#### Delete Task
+
+- Method: `DELETE /tasks/:id`
+- Response:
+```json
+{
+  "message": "Task Deleted Successfully!",
+  "task": { ... }
+}
+```
+
+### Error Response Format
+
+Validation errors return:
+```json
+{
+  "error": "Validation Error",
+  "message": "Details..."
+}
+```
+
+Not found:
+```json
+{
+  "error": "Not Found",
+  "message": "Task Not Found!"
+}
+```
+
+Server error:
+```json
+{
+  "error": "Internal Server Error",
+  "message": "Something went wrong from server!"
+}
+```
 
 ## 📁 Project Structure
 
 ```
 src/
-├── models/
-│ └── taskModel.js # Business logic and data operations
-├── controllers/
-│ └── taskController.js # HTTP request/response handling
-├── routes/
-│ └── taskRoutes.js # API route definitions
-├── middlewares/
-│ ├── validation.js # Input validation middleware
-│ ├── errorHandler.js # Global error handling
-│ └── requestLogger.js # Request logging middleware
-├── utils/
-│ └── errors.js # Custom error classes
 ├── app.js # Express app configuration
-└── server.js # Server entry point
+├── server.js # Server entry point
+├── controllers/
+│ └── taskController.js # Request handlers
+├── routes/
+│ └── taskRoutes.js # API routes
+├── models/
+│ └── taskModel.js # Business logic (Prisma-backed)
+├── middlewares/
+│ ├── validation.js # Request validation
+│ ├── errorHandler.js # Centralized error handling
+│ └── requestLogger.js # Request logging
+├── utils/
+│ └── errors.js # Custom errors
+└── db/
+└── prisma.js # Prisma client and graceful shutdown
+prisma/
+└── schema.prisma # Prisma schema (PostgreSQL)
 ```
 
-## 🔧 Component Descriptions
 
-### **Models** (`src/models/`)
+## 🔧 Development Notes
 
-- **`taskModel.js`** - Contains all business logic for task operations
-  - Handles data storage (in-memory array)
-  - Performs CRUD operations
-  - Throws custom errors for business rule violations
-  - Validates data before processing
+- Base route prefix: all routes are under `/api/` (see `src/app.js`).
+- JSON parsing is enabled globally and via router (`body-parser`).
+- Prisma client is generated from `prisma/schema.prisma`.
+- Ensure `DATABASE_URL` is set before running migrations or starting the server.
 
-### **Controllers** (`src/controllers/`)
+## 🧪 Quick cURL Examples
 
-- **`taskController.js`** - Handles HTTP requests and responses
-  - Receives requests from routes
-  - Calls model methods for business logic
-  - Formats responses for clients
-  - Passes errors to error handler
+```bash
+# Create
+curl -s -X POST http://localhost:3002/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"taskName":"Learn Prisma"}'
 
-### **Routes** (`src/routes/`)
+# List
+curl -s http://localhost:3002/api/tasks
 
-- **`taskRoutes.js`** - Defines API endpoints
-  - Maps HTTP methods to controller functions
-  - Applies validation middleware
-  - Handles URL parameters
+# Get by ID
+curl -s http://localhost:3002/api/tasks/1
 
-### **Middlewares** (`src/middlewares/`)
+# Update
+curl -s -X PUT http://localhost:3002/api/tasks/1 \
+  -H "Content-Type: application/json" \
+  -d '{"isCompleted": true}'
 
-- **`validation.js`** - Validates incoming request data
-  - Checks data types and formats
-  - Ensures required fields are present
-  - Throws custom validation errors
-- **`errorHandler.js`** - Centralized error handling
-  - Catches all application errors
-  - Logs errors for debugging
-  - Sends consistent error responses
-- **`requestLogger.js`** - Logs all incoming requests
-  - Records request details
-  - Helps with debugging and monitoring
+# Delete
+curl -s -X DELETE http://localhost:3002/api/tasks/1
+```
 
-### **Utils** (`src/utils/`)
-
-- **`errors.js`** - Custom error classes
-
-  - `NotFoundError` - For missing resources (404)
-  - `ValidationError` - For invalid data (400)
-  - Provides consistent error structure
-
-  ## 📝 License
+## 📝 License
 
 This project is licensed under the ISC License.
 
@@ -145,26 +262,3 @@ This project is licensed under the ISC License.
 - **Name**: Nayan Choudhary
 - **Email**: nayanscsit09@gmail.com
 - **GitHub**: nayanchaudhary31
-
-## 🔮 Future Enhancements
-
-- [ ] **Database Integration** - MongoDB or PostgreSQL
-- [ ] **User Authentication** - JWT-based authentication
-- [ ] **Task Categories** - Organize tasks by categories
-- [ ] **Task Priority** - Priority levels (Low, Medium, High)
-- [ ] **Due Dates** - Task deadlines and reminders
-- [ ] **Search & Filter** - Advanced task filtering
-- [ ] **API Rate Limiting** - Prevent abuse
-- [ ] **Unit & Integration Tests** - Comprehensive test coverage
-- [ ] **Docker Support** - Containerization
-- [ ] **CI/CD Pipeline** - Automated testing and deployment
-- [ ] **API Documentation** - Swagger/OpenAPI documentation
-- [ ] **Real-time Updates** - WebSocket support
-
-## 📞 Support
-
-For support and questions, please open an issue on GitHub or contact the maintainer.
-
----
-
-**Made with ❤️ using Node.js and Express.js**
