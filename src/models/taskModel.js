@@ -1,78 +1,80 @@
 const { NotFoundError, ValidationError } = require("../utils/errors");
-
+const prisma = require("../db/prisma");
 class TaskModel {
-  constructor() {
-    this.tasks = [
-      {
-        id: 1,
-        taskName: "Solve 2 Questions",
-        isCompleted: false,
-      },
-      {
-        id: 2,
-        taskName: "Learn Backend Development",
-        isCompleted: false,
-      },
-    ];
-    this.nextId = 3;
-  }
-
-  getAllTasks() {
-    if (this.tasks.length === 0) {
-      throw new NotFoundError("No Task Found!");
+  validateId(id) {
+    const n = Number(id);
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new ValidationError("Invalid Task Id");
     }
-    return this.tasks;
+    return n;
+  }
+  async getAllTasks() {
+    const allTasks = await prisma.task.findMany({ orderBy: { id: "asc" } });
+    return allTasks;
   }
 
-  getTaskById(id) {
-    const task = this.tasks.find((t) => t.id === parseInt(id));
+  async getTaskById(id) {
+    const validId = this.validateId(id);
+    const task = await prisma.task.findUnique({ where: { id: validId } });
     if (!task) {
       throw new NotFoundError("Task Not Found!");
     }
-
     return task;
   }
 
-  createTask(taskName) {
+  async createTask(taskName) {
     if (!taskName || taskName.trim().length === 0) {
       throw new ValidationError("Task name is required and cannot be empty");
     }
-    const newTask = {
-      id: this.nextId++,
-      taskName: taskName.trim(),
-      isCompleted: false,
-    };
-
-    this.tasks.push(newTask);
-
+    const newTask = await prisma.task.create({ data: { taskName: taskName } });
     return newTask;
   }
 
-  updateTask(id, updateData) {
+  async updateTask(id, updateData) {
+    // Validate the id
+    const validId = this.validateId(id);
     // Find the task first
-    const task = this.getTaskById(id);
+    await this.getTaskById(validId);
+
+    // Check if hasAnyField
+    const hasAnyField =
+      updateData &&
+      (Object.prototype.hasOwnProperty.call(updateData, "taskName") ||
+        Object.prototype.hasOwnProperty.call(updateData, "isCompleted"));
+
+    if (!hasAnyField) {
+      throw new ValidationError("No fields provided to update");
+    }
     // Validate the input data
     if (updateData.taskName !== undefined) {
       if (updateData.taskName.trim().length === 0) {
         throw new ValidationError("Task name cannot be empty");
       }
-      task.taskName = updateData.taskName.trim();
+      updateData.taskName = updateData.taskName.trim();
     }
 
     if (updateData.isCompleted !== undefined) {
       if (typeof updateData.isCompleted !== "boolean") {
         throw new ValidationError("isCompleted must be a boolean");
       }
-      task.isCompleted = updateData.isCompleted;
     }
 
-    return task;
+    const updatedTask = await prisma.task.update({
+      where: { id: id },
+      data: {
+        taskName: updateData.taskName,
+        isCompleted: updateData.isCompleted,
+      },
+    });
+
+    return updatedTask;
   }
 
-  deleteTask(id) {
-    const task = this.getTaskById(id);
-    this.tasks = this.tasks.filter((t) => t.id !== parseInt(id));
-    return task;
+  async deleteTask(id) {
+    const validId = this.validateId(id);
+    await this.getTaskById(validId);
+    const deletedTask = await prisma.task.delete({ where: { id: validId } });
+    return deletedTask;
   }
 }
 
